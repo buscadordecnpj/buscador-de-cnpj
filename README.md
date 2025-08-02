@@ -1,4 +1,4 @@
-# CNPJ MCP Server
+# Buscador de CNPJ - MCP Server
 
 Um servidor MCP (Model Context Protocol) para busca de dados de empresas brasileiras usando a API do [buscadordecnpj.com](https://buscadordecnpj.com).
 
@@ -14,22 +14,35 @@ Um servidor MCP (Model Context Protocol) para busca de dados de empresas brasile
 
 ## 🚀 Instalação
 
-### Pré-requisitos
-- Python 3.11 ou superior
-- pip
-
-### 1. Instale o pacote
+### 🎯 Instalação Automática (Recomendada)
 ```bash
-pip install cnpj-mcp-server
+curl -sSL https://raw.githubusercontent.com/victortavernari/buscador-de-cnpj/main/install.sh | bash
 ```
 
-### 2. Configure a API key (opcional para funcionalidades premium)
+Este script irá:
+- ✅ Detectar seu sistema operacional
+- ✅ Instalar uv (se necessário)
+- ✅ Instalar buscador-de-cnpj
+- ✅ Configurar automaticamente o Claude Desktop
+- ✅ Criar wrapper scripts para compatibilidade
+
+### 🔧 Instalação Manual
+
+#### Opção A: Usando uv
 ```bash
-# Crie um arquivo .env no diretório do seu projeto
-echo "CNPJ_API_KEY=sua_api_key_aqui" > .env
+# Instale uv (se não tiver)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# ou no Windows:
+# powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Para obter uma API key, visite: https://buscadordecnpj.com
+#### Opção B: Usando pip
+```bash
+pip install buscador-de-cnpj
+```
+
+### 🔑 Configure sua API key
+Para funcionalidades premium, obtenha uma API key em: https://buscadordecnpj.com
 
 ## 🔧 Configuração no Claude Desktop
 
@@ -38,11 +51,101 @@ Para obter uma API key, visite: https://buscadordecnpj.com
 **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ### 2. Adicione a configuração do MCP server
+
+#### Opção A: Usando uvx com script wrapper (recomendado)
+
+**1. Crie um script wrapper:**
+```bash
+# Crie o diretório se não existir
+sudo mkdir -p /usr/local/bin
+
+# Crie o script wrapper
+sudo tee /usr/local/bin/uvx-wrapper << 'EOF'
+#!/bin/bash
+# Encontra uvx automaticamente e executa
+UVX_PATH=""
+
+# Possíveis localizações do uvx
+POSSIBLE_PATHS=(
+    "$HOME/.local/bin/uvx"
+    "$HOME/Library/Python/3.*/bin/uvx"
+    "/opt/homebrew/bin/uvx"
+    "/usr/local/bin/uvx"
+    "$(which uvx 2>/dev/null)"
+)
+
+for path in "${POSSIBLE_PATHS[@]}"; do
+    if [[ -x "$path" ]]; then
+        UVX_PATH="$path"
+        break
+    fi
+    # Para paths com wildcard
+    for expanded in $path; do
+        if [[ -x "$expanded" ]]; then
+            UVX_PATH="$expanded"
+            break 2
+        fi
+    done
+done
+
+if [[ -z "$UVX_PATH" ]]; then
+    echo "Error: uvx not found. Please install uv first." >&2
+    exit 1
+fi
+
+exec "$UVX_PATH" "$@"
+EOF
+
+# Torne executável
+sudo chmod +x /usr/local/bin/uvx-wrapper
+```
+
+**2. Configure no Claude Desktop:**
 ```json
 {
   "mcpServers": {
     "cnpj-search": {
-      "command": "cnpj-mcp-server",
+      "command": "/usr/local/bin/uvx-wrapper",
+      "args": ["buscador-de-cnpj"],
+      "env": {
+        "CNPJ_API_KEY": "sua_api_key_aqui"
+      }
+    }
+  }
+}
+```
+
+#### Opção B: Instalação global com pip (mais simples)
+```bash
+pip install buscador-de-cnpj
+```
+
+```json
+{
+  "mcpServers": {
+    "cnpj-search": {
+      "command": "buscador-de-cnpj",
+      "env": {
+        "CNPJ_API_KEY": "sua_api_key_aqui"
+      }
+    }
+  }
+}
+```
+
+#### Opção C: Caminho manual (se outras não funcionarem)
+**1. Encontre seu caminho do uvx:**
+```bash
+which uvx
+```
+
+**2. Use o caminho completo:**
+```json
+{
+  "mcpServers": {
+    "cnpj-search": {
+      "command": "/seu/caminho/para/uvx",
+      "args": ["buscador-de-cnpj"],
       "env": {
         "CNPJ_API_KEY": "sua_api_key_aqui"
       }
@@ -155,23 +258,72 @@ Busque empresas com nome "Petrobras" no estado do Rio de Janeiro que estejam ati
 
 ## 🚨 Solução de Problemas
 
+### Erro: "spawn uvx ENOENT"
+O Claude Desktop não encontra o `uvx`. Soluções:
+
+**1. Encontre o caminho do uvx:**
+```bash
+which uvx
+```
+
+**2. Use o caminho completo na configuração:**
+```json
+{
+  "command": "/caminho/completo/para/uvx",
+  "args": ["buscador-de-cnpj"]
+}
+```
+
+**3. Se o uvx não estiver instalado:**
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**4. Ou use a Opção B com pip install**
+
+### Erro: "spawn buscador-de-cnpj ENOENT"
+O pacote não está instalado globalmente. Execute:
+```bash
+pip install buscador-de-cnpj
+```
+
 ### Erro: "API key required"
-Certifique-se de que:
-1. O arquivo `.env` existe na raiz do projeto
-2. A variável `CNPJ_API_KEY` está definida corretamente
-3. A API key é válida e tem créditos disponíveis
+Para funcionalidades premium:
+1. Defina a variável de ambiente: `export CNPJ_API_KEY="sua_key"`
+2. Ou configure no arquivo de configuração do Claude Desktop
+3. Obtenha uma API key em: https://buscadordecnpj.com
 
 ### Erro: "Unknown tool"
 Verifique se:
-1. O servidor MCP está rodando corretamente
-2. O Claude Desktop foi reiniciado após a configuração
-3. O nome da ferramenta está correto
+1. O Claude Desktop foi reiniciado após a configuração
+2. A configuração JSON está correta (sem erros de sintaxe)
+3. O nome do servidor está correto: "cnpj-search"
 
-### Servidor não inicia
+### Servidor não conecta
 Confirme que:
 1. Python 3.11+ está instalado
-2. As dependências foram instaladas com `pip install -e .`
-3. Não há conflitos de porta
+2. O pacote foi instalado corretamente
+3. Não há conflitos de dependências
+
+## 🔍 Debugging
+
+Para testar o servidor MCP localmente, use o MCP Inspector:
+
+### Com uvx
+```bash
+npx @modelcontextprotocol/inspector uvx buscador-de-cnpj
+```
+
+### Com pip install
+```bash
+npx @modelcontextprotocol/inspector buscador-de-cnpj
+```
+
+Isso abrirá uma interface web onde você pode testar as ferramentas do MCP server diretamente.
 
 ## 📞 Suporte
 

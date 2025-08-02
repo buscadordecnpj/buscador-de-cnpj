@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cnpj-mcp-server"
-version = "0.1.1"
+name = "buscador-de-cnpj"
+version = "0.2.2"
 description = "A MCP server for CNPJ search using buscadordecnpj.com API"
 readme = "README.md"
 license = {text = "MIT"}
@@ -38,5 +38,8 @@ Repository = "https://github.com/victortavernari/cnpj-mcp-server"
 Issues = "https://github.com/victortavernari/cnpj-mcp-server/issues"
 Documentation = "https://github.com/victortavernari/cnpj-mcp-server#readme"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/cnpj_mcp_server"]
+
 [project.scripts]
-cnpj-mcp-server = "cnpj_mcp_server:cli_main"
+buscador-de-cnpj = "cnpj_mcp_server:cli_main"
