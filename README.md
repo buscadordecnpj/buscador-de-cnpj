@@ -18,19 +18,14 @@ Um servidor MCP (Model Context Protocol) para busca de dados de empresas brasile
 - Python 3.11 ou superior
 - pip
 
-### 1. Clone e instale o projeto
+### 1. Instale o pacote
 ```bash
-git clone <repo-url>
-cd cnpj-mcp-server
-pip install -e .
+pip install cnpj-mcp-server
 ```
 
 ### 2. Configure a API key (opcional para funcionalidades premium)
 ```bash
-# Copie o arquivo de exemplo
-cp .env.example .env
-
-# Edite o arquivo .env e adicione sua API key
+# Crie um arquivo .env no diretório do seu projeto
 echo "CNPJ_API_KEY=sua_api_key_aqui" > .env
 ```
 

@@ -1,3 +1,3 @@
-from .server import main
+from .server import main, cli_main
 
-__all__ = ["main"]
+__all__ = ["main", "cli_main"]

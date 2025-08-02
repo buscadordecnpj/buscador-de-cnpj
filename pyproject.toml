@@ -4,11 +4,25 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cnpj-mcp-server"
-version = "0.1.0"
+version = "0.1.1"
 description = "A MCP server for CNPJ search using buscadordecnpj.com API"
+readme = "README.md"
+license = {text = "MIT"}
 authors = [
-    {name = "Victor Tavernari", email = "victor@example.com"}
+    {name = "Buscador de CNPJ", email = "contato@buscadordecnpj.com"}
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = ["mcp", "cnpj", "brazil", "company", "search", "api"]
 dependencies = [
     "aiohttp>=3.11.16",
     "certifi>=2025.1.31",
@@ -20,6 +34,9 @@ requires-python = ">=3.11"
 
 [project.urls]
 Homepage = "https://github.com/victortavernari/cnpj-mcp-server"
+Repository = "https://github.com/victortavernari/cnpj-mcp-server"
+Issues = "https://github.com/victortavernari/cnpj-mcp-server/issues"
+Documentation = "https://github.com/victortavernari/cnpj-mcp-server#readme"
 
 [project.scripts]
-cnpj-mcp-server = "cnpj_mcp_server:main"
+cnpj-mcp-server = "cnpj_mcp_server:cli_main"

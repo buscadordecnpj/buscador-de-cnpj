@@ -251,3 +251,9 @@ async def main():
             write_stream,
             server.create_initialization_options()
         )
+
+
+def cli_main():
+    """Entry point para o CLI"""
+    import asyncio
+    asyncio.run(main())
