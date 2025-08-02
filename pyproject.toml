@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cnpj-mcp-server"
+version = "0.1.0"
+description = "A MCP server for CNPJ search using buscadordecnpj.com API"
+authors = [
+    {name = "Victor Tavernari", email = "victor@example.com"}
+]
+dependencies = [
+    "aiohttp>=3.11.16",
+    "certifi>=2025.1.31",
+    "mcp[cli]>=1.6.0",
+    "pydantic>=2.11.2",
+    "python-dotenv>=1.1.0"
+]
+requires-python = ">=3.11"
+
+[project.urls]
+Homepage = "https://github.com/victortavernari/cnpj-mcp-server"
+
+[project.scripts]
+cnpj-mcp-server = "cnpj_mcp_server:main"
