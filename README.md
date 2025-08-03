@@ -9,8 +9,8 @@ Um servidor MCP (Model Context Protocol) para busca de dados de empresas brasile
 
 ### 💎 Consultas Premium (requer API key)
 - **cnpj_detailed_lookup**: Busca detalhada com dados completos da empresa
-- **cnpj_bulk_lookup**: Busca em lote de múltiplos CNPJs (até 20 por requisição)
-- **cnpj_advanced_search**: Busca avançada com filtros personalizados
+- **term_search**: Busca por termo textual (linguagem natural) em múltiplos campos; ex.: "padarias em SP Tatuapé"
+- **cnpj_advanced_search**: Busca avançada com filtros estruturados (exatos, intervalos); ideal para fine-tuning
 
 ## 🚀 Instalação
 
@@ -213,16 +213,31 @@ Busque empresas com nome "Petrobras" no estado do Rio de Janeiro que estejam ati
 }
 ```
 
-### 4. Busca Avançada
+### 4. Busca por Termo (Texto Livre)
+```json
+{
+  "tool": "term_search",
+  "arguments": {
+    "term": "padarias em SP Tatuapé",
+    "uf": "SP",
+    "pagina": 1,
+    "limite": 100
+  }
+}
+```
+
+### 5. Busca Avançada (Filtros Estruturados)
 ```json
 {
   "tool": "cnpj_advanced_search",
   "arguments": {
-    "name": "Petrobras",
-    "state": "RJ",
-    "registration_status": "ATIVA",
-    "page": 1,
-    "per_page": 10
+    "razao_social": "*padaria*",
+    "uf": "SP",
+    "municipio": "São Paulo",
+    "bairro": "Tatuapé",
+    "situacao_cadastral": "2",
+    "pagina": 1,
+    "limite": 100
   }
 }
 ```
