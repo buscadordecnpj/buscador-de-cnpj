@@ -6,7 +6,7 @@ Este documento orienta como publicar e operar o pacote `buscador-de-cnpj` (servi
 
 ## Visão Geral
 
-- Pacote PyPI: `buscador-de-cnpj`
+- Pacote PyPI: `buscador-de-cnpj` (versão atual recomendada: 0.2.7)
 - Entry point (CLI): `buscador-de-cnpj`
 - Repositório: https://github.com/victortavernari/cnpj-mcp-server
 - Requisitos: Python >= 3.11
@@ -19,7 +19,8 @@ Este documento orienta como publicar e operar o pacote `buscador-de-cnpj` (servi
 
 Exemplos curl (ambiente local):
 - Consulta detalhada: `curl -H "x-api-key: YOUR_API_KEY" "http://localhost:8001/cnpj/47271733000124"`
-- Busca avançada: `curl -H "x-api-key: YOUR_API_KEY" "http://localhost:8001/search/?term=empresa"`
+- Busca por termo (genérica): `curl -H "x-api-key: YOUR_API_KEY" "http://localhost:8001/search/?term=padarias%20em%20SP%20Tatuap%C3%A9"`
+- Busca avançada (filtros finos): `curl -H "x-api-key: YOUR_API_KEY" "http://localhost:8001/search/?uf=SP&municipio=São Paulo&bairro=Tatuapé&razao_social=*padaria*"`
 
 ## Deploy
 
@@ -29,25 +30,24 @@ Pré-requisitos:
 - `~/.pypirc` configurado com credenciais do PyPI (usuário `__token__` + `password=pypi-...`) ou usar `uv publish --token ...`.
 - `uv` instalado.
 
-Passos:
-1. Atualize a versão no `pyproject.toml` (sem reusar versão já publicada).
-2. Gere os artefatos:
-   - `uv build`
-3. Publique (uma das opções):
+Passos (com pipeline de validação):
+1. Valide o projeto: `make validate` (roda testes e validação estática de TOOLS)
+2. Atualize a versão no `pyproject.toml` (SemVer; não reutilize versões):
+3. Gere os artefatos: `uv build`
+4. Publique (uma das opções):
    - Via uv (token): `uv publish --token "$PYPITOKEN"`
    - Via Twine (usa ~/.pypirc):
-     - Ative o venv (opcional) e instale Twine:
-       - `python -m ensurepip --upgrade && python -m pip install --upgrade twine`
-     - Valide artefatos: `python -m twine check dist/*`
-     - Publique: `python -m twine upload --repository pypi dist/*`
+     - `python -m ensurepip --upgrade && python -m pip install --upgrade twine`
+     - `python -m twine check dist/*`
+     - `python -m twine upload --repository pypi dist/*`
 
 Dica: Publique no TestPyPI antes se preferir validar a página de projeto: `--repository testpypi`.
 
 ### Uso via uvx
 
 - Instala e executa o CLI diretamente:
-  - `uvx buscador-de-cnpj --help`
-  - `uvx buscador-de-cnpj`
+  - `uvx buscador-de-cnpj --no-cache` (força baixar última versão)
+  - `uvx buscador-de-cnpj==0.2.7` (fixa versão específica)
 
 Se o comando iniciar o servidor imediatamente, `--help` pode não listar opções; nesse caso, consulte o README ou o código de `cli_main`.
 
@@ -84,9 +84,9 @@ Logs de debug imprimem:
 - Valide entradas (ex.: CNPJ com 14 dígitos) antes de chamar a API.
 
 ### Testes
-- Adicione testes unitários para funções utilitárias (ex.: limpeza/validação de CNPJ).
-- Para integrações HTTP, use mocks ou um modo de sandbox quando possível.
-- Se houver suite de testes no projeto, descubra como rodar (ex.: `pytest`) e mantenha-a verde.
+- `make install-dev` prepara o ambiente (pytest, pytest-asyncio, instalação editable).
+- `make validate` executa: pytest (unittests) + scripts/validate.py (sintaxe + TOOLS via AST).
+- Para integrações HTTP, use mocks (veja tests/test_server.py) ou um modo de sandbox quando possível.
 
 ### Versionamento e Releases
 - Use SemVer: patch para correções e docs, minor para funcionalidades compatíveis, major para quebras.
@@ -106,6 +106,8 @@ Logs de debug imprimem:
 
 - “File already exists” ao publicar: incremente `version` em `pyproject.toml` e gere artefatos novamente.
 - “Missing credentials” ao publicar com `uv`: forneça `--token` ou configure `~/.pypirc` e use Twine.
+- uvx com versão antiga: use `--no-cache` e/ou fixe versão `==0.2.7`.
+- uvx falha ao resolver versão: aguarde propagação no índice, ou publique um patch (0.2.x) e use `--no-cache`.
 - uvx não mostra help: o entry point pode iniciar o servidor direto; verifique README/código.
 - 401 na API: verifique variáveis de ambiente e envio do header `x-api-key`.
 
