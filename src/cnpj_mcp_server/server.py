@@ -45,75 +45,52 @@ TOOLS = {
             "required": ["cnpj"]
         }
     },
+    "term_search": {
+        "name": "term_search",
+        "description": "Busca por termo em múltiplos campos (texto livre). Ideal para consultas genéricas como 'padarias em SP Tatuapé'. Requer API key; 2 créditos por requisição.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "term": {"type": "string", "description": "Termo de busca textual. Aceita curingas como *padaria*"},
+                "uf": {"type": "string", "description": "UF opcional (ex: SP). Acelera e refina os resultados."},
+                "situacao_cadastral": {"type": "string", "description": "Situação opcional (ex: 2 para ATIVA)"},
+                "faixa_faturamento_estimado": {"type": "string", "description": "Faixa de faturamento (ex: 0_360k, 360k_1kk, 1kk_4.8kk, 4.8kk_20kk, 20kk_mais)"},
+                "pagina": {"type": "integer", "description": "Página (default 1)"},
+                "limite": {"type": "integer", "description": "Limite por página (default/max 10000)"},
+                "ordenarPor": {"type": "string", "description": "Campo de ordenação"},
+                "ordenacaoDesc": {"type": "boolean", "description": "true para ordem descendente"}
+            },
+            "required": ["term"]
+        }
+    },
     "cnpj_advanced_search": {
         "name": "cnpj_advanced_search",
-        "description": "Busca avançada com filtros personalizados (requer API key) - 2 créditos",
+        "description": "Busca avançada com filtros estruturados (exatos e intervalos). Use para refinamentos finos. Requer API key; 2 créditos por requisição.",
         "inputSchema": {
             "type": "object", 
             "properties": {
-                "razao_social": {
-                    "type": "string",
-                    "description": "Razão social da empresa"
-                },
-                "nome_fantasia": {
-                    "type": "string",
-                    "description": "Nome fantasia da empresa"
-                },
-                "cnae_principal": {
-                    "type": "string",
-                    "description": "CNAE principal da atividade"
-                },
-                "uf": {
-                    "type": "string",
-                    "description": "Estado (UF)"
-                },
-                "municipio": {
-                    "type": "string", 
-                    "description": "Município"
-                },
-                "bairro": {
-                    "type": "string", 
-                    "description": "Bairro"
-                },
-                "cep": {
-                    "type": "string", 
-                    "description": "CEP"
-                },
-                "ddd": {
-                    "type": "string", 
-                    "description": "DDD do telefone"
-                },
-                "situacao_cadastral": {
-                    "type": "string",
-                    "description": "Situação cadastral (ATIVA, BAIXADA, etc.)"
-                },
-                "porte_empresa": {
-                    "type": "string",
-                    "description": "Porte da empresa (PEQUENO, MEDIO, GRANDE, etc.)"
-                },
-                "capital_social_min": {
-                    "type": "number",
-                    "description": "Capital social mínimo"
-                },
-                "capital_social_max": {
-                    "type": "number",
-                    "description": "Capital social máximo"
-                },
-                "data_abertura_inicio": {
-                    "type": "string",
-                    "description": "Data de abertura inicial (YYYY-MM-DD)"
-                },
-                "data_abertura_fim": {
-                    "type": "string",
-                    "description": "Data de abertura final (YYYY-MM-DD)"
-                },
-                "page": {
-                    "type": "integer",
-                    "description": "Página dos resultados (padrão: 1)"
-                }
+                "razao_social": {"type": "string", "description": "Busca textual com curingas, ex: *padaria*"},
+                "nome_fantasia": {"type": "string", "description": "Busca textual com curingas"},
+                "cnae_principal": {"type": "string", "description": "Código CNAE principal (exato)"},
+                "uf": {"type": "string", "description": "Estado (UF)"},
+                "municipio": {"type": "string", "description": "Município (texto)"},
+                "bairro": {"type": "string", "description": "Bairro (texto)"},
+                "cep": {"type": "string", "description": "CEP (8 dígitos)"},
+                "ddd": {"type": "string", "description": "DDD do telefone"},
+                "situacao_cadastral": {"type": "string", "description": "Código (1,2,3,4,8)"},
+                "porte_empresa": {"type": "string", "description": "Código do porte"},
+                "capital_social_min": {"type": "number", "description": "Capital mínimo"},
+                "capital_social_max": {"type": "number", "description": "Capital máximo"},
+                "data_abertura_inicio": {"type": "string", "description": "YYYY-MM-DD"},
+                "data_abertura_fim": {"type": "string", "description": "YYYY-MM-DD"},
+                "pagina": {"type": "integer", "description": "Página (default 1)"},
+                "limite": {"type": "integer", "description": "Limite por página (default/max 10000)"},
+                "ordenarPor": {"type": "string", "description": "Campo de ordenação"},
+                "ordenacaoDesc": {"type": "boolean", "description": "true para ordem descendente"}
             }
         }
     },
+    **{
     "search_csv": {
         "name": "search_csv",
         "description": "Exporta resultados de busca em formato CSV (requer API key) - 2 créditos por página",
@@ -277,10 +254,13 @@ class CNPJClient:
     async def advanced_search(self, **kwargs) -> Dict[str, Any]:
         """Busca avançada parametrizada (consome créditos por requisição).
 
+        Use quando precisar de filtros estruturados (exatos/intervalos). Para
+        consultas de linguagem natural (e.g., "padarias em SP Tatuapé"), prefira
+        `term_search` que agrega campos textuais automaticamente.
+
         Exemplos de filtros aceitos (não exaustivo):
-        - term: busca textual com curingas, ex: "*padaria*"
         - uf, municipio, bairro, cep
-        - razao_social, nome_fantasia
+        - razao_social, nome_fantasia (textuais com curingas)
         - cnae_principal (código), descricao_cnae_fiscal_principal (texto)
         - situacao_cadastral, porte_empresa
         - capital_social_min, capital_social_max
@@ -365,6 +345,9 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         if name == "cnpj_detailed_lookup":
             result = await cnpj_client.detailed_lookup(arguments["cnpj"])
     
+        elif name == "term_search":
+            result = await cnpj_client.advanced_search(**arguments)
+
         elif name == "cnpj_advanced_search":
             result = await cnpj_client.advanced_search(**arguments)
             
