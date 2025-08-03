@@ -31,20 +31,6 @@ server = Server("buscador-de-cnpj")
 
 # Tool definitions
 TOOLS = {
-    "cnpj_public_lookup": {
-        "name": "cnpj_public_lookup",
-        "description": "Busca pública gratuita de dados básicos de uma empresa por CNPJ",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "cnpj": {
-                    "type": "string",
-                    "description": "CNPJ da empresa (somente números ou com formatação)"
-                }
-            },
-            "required": ["cnpj"]
-        }
-    },
     "cnpj_detailed_lookup": {
         "name": "cnpj_detailed_lookup", 
         "description": "Busca detalhada de dados completos de uma empresa por CNPJ (requer API key)",
@@ -57,29 +43,6 @@ TOOLS = {
                 }
             },
             "required": ["cnpj"]
-        }
-    },
-    "cnpj_bulk_lookup": {
-        "name": "cnpj_bulk_lookup",
-        "description": "Busca em lote de múltiplos CNPJs (requer API key)",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "cnpjs": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Lista de CNPJs para buscar (até 20 por requisição)"
-                },
-                "uf": {
-                    "type": "string",
-                    "description": "Filtrar por estado (UF) - opcional"
-                },
-                "situacao_cadastral": {
-                    "type": "string",
-                    "description": "Filtrar por situação cadastral - opcional"
-                }
-            },
-            "required": ["cnpjs"]
         }
     },
     "cnpj_advanced_search": {
@@ -147,34 +110,7 @@ TOOLS = {
                 "page": {
                     "type": "integer",
                     "description": "Página dos resultados (padrão: 1)"
-                },
-                "per_page": {
-                    "type": "integer",
-                    "description": "Resultados por página (máximo: 50, padrão: 10)"
                 }
-            }
-        }
-    },
-    "search_estimate": {
-        "name": "search_estimate",
-        "description": "Estima o custo em créditos de uma busca avançada (gratuito)",
-        "inputSchema": {
-            "type": "object", 
-            "properties": {
-                "razao_social": {"type": "string"},
-                "nome_fantasia": {"type": "string"},
-                "cnae_principal": {"type": "string"},
-                "uf": {"type": "string"},
-                "municipio": {"type": "string"},
-                "bairro": {"type": "string"},
-                "cep": {"type": "string"},
-                "ddd": {"type": "string"},
-                "situacao_cadastral": {"type": "string"},
-                "porte_empresa": {"type": "string"},
-                "capital_social_min": {"type": "number"},
-                "capital_social_max": {"type": "number"},
-                "data_abertura_inicio": {"type": "string"},
-                "data_abertura_fim": {"type": "string"}
             }
         }
     },
@@ -198,51 +134,7 @@ TOOLS = {
                 "capital_social_max": {"type": "number"},
                 "data_abertura_inicio": {"type": "string"},
                 "data_abertura_fim": {"type": "string"},
-                "page": {"type": "integer", "description": "Página (primeira página gratuita)"},
-                "per_page": {"type": "integer", "description": "Registros por página (máx: 1000)"}
-            }
-        }
-    },
-    "csv_estimate": {
-        "name": "csv_estimate", 
-        "description": "Estima o custo em créditos de exportação CSV (gratuito)",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "razao_social": {"type": "string"},
-                "nome_fantasia": {"type": "string"},
-                "cnae_principal": {"type": "string"},
-                "uf": {"type": "string"},
-                "municipio": {"type": "string"},
-                "bairro": {"type": "string"},
-                "cep": {"type": "string"},
-                "ddd": {"type": "string"},
-                "situacao_cadastral": {"type": "string"},
-                "porte_empresa": {"type": "string"},
-                "capital_social_min": {"type": "number"},
-                "capital_social_max": {"type": "number"},
-                "data_abertura_inicio": {"type": "string"},
-                "data_abertura_fim": {"type": "string"},
-                "per_page": {"type": "integer", "description": "Registros por página (máx: 1000)"}
-            }
-        }
-    },
-    "logs_summary": {
-        "name": "logs_summary",
-        "description": "Resumo dos logs de uso da API (requer API key)",
-        "inputSchema": {
-            "type": "object",
-            "properties": {}
-        }
-    },
-    "logs_history": {
-        "name": "logs_history", 
-        "description": "Histórico detalhado de logs da API (requer API key)",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "page": {"type": "integer", "description": "Página dos resultados"},
-                "per_page": {"type": "integer", "description": "Registros por página"}
+                "page": {"type": "integer", "description": "Página (primeira página gratuita)"}
             }
         }
     }
@@ -250,7 +142,36 @@ TOOLS = {
 
 
 class CNPJClient:
-    """Cliente para a API do buscador de CNPJ"""
+    """Cliente para a API do Buscador de CNPJ.
+
+    Este cliente foi pensado para ser usado por agentes LLM e aplicações automáticas,
+    padronizando autenticação, validação de entradas e tratamento de respostas.
+
+    Autenticação
+    - Header: x-api-key: <sua_chave>
+    - Origem: lida automaticamente de variáveis de ambiente (preferência nesta ordem):
+      CNPJ_API_KEY, CNPJ_API_TOKEN, BUSCADOR_CNPJ_API_KEY, API_KEY
+    - Segurança: a chave NUNCA é enviada por query string, apenas via header.
+
+    Variáveis de Ambiente Suportadas
+    - CNPJ_API_KEY: principal recomendada
+    - CNPJ_API_TOKEN: alternativa aceita
+    - BUSCADOR_CNPJ_API_KEY: alternativa aceita
+    - API_KEY: alternativa genérica
+
+    Exemplos de uso (equivalentes HTTP diretos)
+    - Consulta por CNPJ (detalhada):
+      curl -H "x-api-key: YOUR_API_KEY" "http://localhost:8001/cnpj/47271733000124"
+
+    - Busca avançada (Manticore Search):
+      curl -H "x-api-key: YOUR_API_KEY" "http://localhost:8001/search/?term=empresa"
+
+    Observações para agentes LLM
+    - Sempre envie o header x-api-key.
+    - Não inclua a chave em params.
+    - Garanta CNPJ com 14 dígitos numéricos (use _clean_cnpj antes de consultar).
+    - Trate 401 como falta/erro de chave e 404 como CNPJ não encontrado.
+    """
     
     def __init__(self):
         self.base_url = "https://api.buscadordecnpj.com"
@@ -274,13 +195,17 @@ class CNPJClient:
         else:
             print("⚠️ API key não encontrada! Verifique as variáveis de ambiente.")
         
+        # Headers padrão com API key quando disponível
+        self.default_headers: Dict[str, str] = {}
+        if self.api_key:
+            self.default_headers["x-api-key"] = self.api_key
+        
     def _clean_cnpj(self, cnpj: str) -> str:
-        """Remove formatação do CNPJ"""
+        """Remove caracteres não numéricos e valida que o CNPJ tenha 14 dígitos."""
         cleaned = ''.join(filter(str.isdigit, cnpj))
         print(f"🔍 Debug - CNPJ original: {cnpj}")
         print(f"🔍 Debug - CNPJ limpo: {cleaned}")
         
-        # Validar se tem 14 dígitos
         if len(cleaned) != 14:
             raise ValueError(f"CNPJ deve ter 14 dígitos. Recebido: {len(cleaned)} dígitos ({cleaned})")
         
@@ -288,11 +213,19 @@ class CNPJClient:
     
     async def _make_request(self, endpoint: str, params: Optional[Dict] = None, 
                           headers: Optional[Dict] = None) -> Dict[str, Any]:
-        """Faz requisição GET para a API"""
+        """Faz requisição GET para a API.
+
+        Parâmetros
+        - endpoint: caminho do recurso (ex: "/cnpj/00000000000000", "/search/")
+        - params: dicionário de query string (NÃO incluir credenciais)
+        - headers: headers adicionais (serão mesclados; x-api-key já é definido por padrão)
+        """
         url = f"{self.base_url}{endpoint}"
         
+        merged_headers = {**self.default_headers, **(headers or {})}
+        
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params, headers=headers) as response:
+            async with session.get(url, params=params, headers=merged_headers) as response:
                 if response.status == 200:
                     return await response.json()
                 else:
@@ -301,25 +234,32 @@ class CNPJClient:
     
     async def _make_post_request(self, endpoint: str, data: Optional[Dict] = None, 
                                headers: Optional[Dict] = None) -> Dict[str, Any]:
-        """Faz requisição POST para a API"""
+        """Faz requisição POST para a API.
+
+        Parâmetros
+        - endpoint: caminho do recurso (ex: "/cnpj/list")
+        - data: corpo JSON a ser enviado
+        - headers: headers adicionais (serão mesclados; x-api-key já é definido por padrão)
+        """
         url = f"{self.base_url}{endpoint}"
         
+        merged_headers = {**self.default_headers, **(headers or {})}
+        
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=data, headers=headers) as response:
+            async with session.post(url, json=data, headers=merged_headers) as response:
                 if response.status == 200:
                     return await response.json()
                 else:
                     error_text = await response.text()
                     raise Exception(f"API Error {response.status}: {error_text}")
     
-    async def public_lookup(self, cnpj: str) -> Dict[str, Any]:
-        """Busca pública gratuita de CNPJ"""
-        clean_cnpj = self._clean_cnpj(cnpj)
-        endpoint = f"/cnpj/public/{clean_cnpj}"
-        return await self._make_request(endpoint)
-    
     async def detailed_lookup(self, cnpj: str) -> Dict[str, Any]:
-        """Busca detalhada com API key"""
+        """Consulta detalhada de CNPJ (consumo de créditos conforme a API).
+
+        - cnpj: string que pode conter máscara; será normalizada para 14 dígitos.
+        - Autenticação: via header x-api-key (já configurado)
+        - Erros comuns: 401 (chave ausente/ inválida), 404 (CNPJ não encontrado)
+        """
         if not self.api_key:
             raise Exception(
                 "🔑 API key necessária para busca detalhada!\n\n"
@@ -332,35 +272,24 @@ class CNPJClient:
         
         clean_cnpj = self._clean_cnpj(cnpj)
         endpoint = f"/cnpj/{clean_cnpj}"
-        params = {"x-api-key": self.api_key}
-        return await self._make_request(endpoint, params=params)
-    
-    async def bulk_lookup(self, cnpjs: List[str], uf: Optional[str] = None, 
-                         situacao_cadastral: Optional[str] = None) -> Dict[str, Any]:
-        """Busca em lote de CNPJs"""
-        if not self.api_key:
-            raise Exception(
-                "🔑 API key necessária para busca em lote!\n\n"
-                "Esta é uma funcionalidade premium. Para usar:\n"
-                "1. Obtenha sua API key em: https://buscadordecnpj.com\n"
-                "2. Configure a variável CNPJ_API_KEY no Claude Desktop\n\n"
-                "💡 Alternativa: Use 'cnpj_public_lookup' para consultas individuais gratuitas."
-            )
-        
-        clean_cnpjs = [self._clean_cnpj(cnpj) for cnpj in cnpjs]
-        endpoint = "/cnpj/list"
-        
-        # Preparar dados para POST
-        data = {"cnpjs": clean_cnpjs, "x-api-key": self.api_key}
-        if uf:
-            data["uf"] = uf
-        if situacao_cadastral:
-            data["situacao_cadastral"] = situacao_cadastral
-            
-        return await self._make_post_request(endpoint, data=data)
+        return await self._make_request(endpoint)
     
     async def advanced_search(self, **kwargs) -> Dict[str, Any]:
-        """Busca avançada com filtros"""
+        """Busca avançada parametrizada (consome créditos por requisição).
+
+        Exemplos de filtros aceitos (não exaustivo):
+        - term: busca textual com curingas, ex: "*padaria*"
+        - uf, municipio, bairro, cep
+        - razao_social, nome_fantasia
+        - cnae_principal (código), descricao_cnae_fiscal_principal (texto)
+        - situacao_cadastral, porte_empresa
+        - capital_social_min, capital_social_max
+        - data_abertura_inicio, data_abertura_fim (YYYY-MM-DD)
+
+        Observações
+        - Não incluir a API key em params; ela é enviada no header automaticamente.
+        - Todos os filtros são combinados com AND na API.
+        """
         print(f"🔍 Debug - API key disponível: {bool(self.api_key)}")
         if self.api_key:
             print(f"🔍 Debug - API key: {self.api_key[:10]}...")
@@ -378,27 +307,25 @@ class CNPJClient:
             )
         
         endpoint = "/search/"
-        
-        # Remove parâmetros vazios
         params = {k: v for k, v in kwargs.items() if v is not None}
-        # Adiciona API key como parâmetro
-        params["x-api-key"] = self.api_key
         print(f"🔍 Debug - Parâmetros: {params}")
         
         return await self._make_request(endpoint, params=params)
     
-    async def search_estimate(self, **kwargs) -> Dict[str, Any]:
-        """Estima o custo de uma busca avançada (gratuito)"""
-        endpoint = "/search/estimate"
-        
-        # Remove parâmetros vazios
-        params = {k: v for k, v in kwargs.items() if v is not None}
-        
-        params = {"x-api-key": self.api_key} if self.api_key else None
-        return await self._make_request(endpoint, params=params)
-    
     async def search_csv(self, **kwargs) -> Dict[str, Any]:
-        """Exporta resultados de busca em CSV"""
+        """Exporta resultados de busca para CSV (2 créditos por página; 1ª grátis).
+
+        Parâmetros de paginação e ordenação aceitos pela API:
+        - pagina_inicio: inteiro (default 1)
+        - pagina_fim: inteiro (default 1)
+        - limite: inteiro (default/max 10000)
+        - ordenarPor: string
+        - ordenacaoDesc: booleano
+
+        Observações
+        - Reaproveita os mesmos filtros de /search.
+        - Não inclua a API key em params; ela é enviada no header automaticamente.
+        """
         if not self.api_key:
             raise Exception(
                 "🔑 API key necessária para exportação CSV!\n\n"
@@ -409,59 +336,10 @@ class CNPJClient:
             )
         
         endpoint = "/search/csv"
-        
-        # Remove parâmetros vazios
         params = {k: v for k, v in kwargs.items() if v is not None}
         
-        params = {"x-api-key": self.api_key}
         return await self._make_request(endpoint, params=params)
     
-    async def csv_estimate(self, **kwargs) -> Dict[str, Any]:
-        """Estima o custo de exportação CSV (gratuito)"""
-        endpoint = "/search/csv/estimate"
-        
-        # Remove parâmetros vazios
-        params = {k: v for k, v in kwargs.items() if v is not None}
-        
-        params = {"x-api-key": self.api_key} if self.api_key else None
-        return await self._make_request(endpoint, params=params)
-    
-    async def logs_summary(self) -> Dict[str, Any]:
-        """Resumo dos logs de uso da API"""
-        if not self.api_key:
-            raise Exception(
-                "🔑 API key necessária para acessar logs!\n\n"
-                "Para usar:\n"
-                "1. Obtenha sua API key em: https://buscadordecnpj.com\n"
-                "2. Configure a variável CNPJ_API_KEY no Claude Desktop"
-            )
-        
-        endpoint = "/logs/summary"
-        params = {"x-api-key": self.api_key}
-        return await self._make_request(endpoint, params=params)
-    
-    async def logs_history(self, page: Optional[int] = None, per_page: Optional[int] = None) -> Dict[str, Any]:
-        """Histórico detalhado de logs da API"""
-        if not self.api_key:
-            raise Exception(
-                "🔑 API key necessária para acessar histórico de logs!\n\n"
-                "Para usar:\n"
-                "1. Obtenha sua API key em: https://buscadordecnpj.com\n"
-                "2. Configure a variável CNPJ_API_KEY no Claude Desktop"
-            )
-        
-        endpoint = "/logs/history"
-        
-        params = {}
-        if page is not None:
-            params["page"] = page
-        if per_page is not None:
-            params["per_page"] = per_page
-        
-        params = {"x-api-key": self.api_key}
-        return await self._make_request(endpoint, params=params)
-
-
 # Initialize client
 cnpj_client = CNPJClient()
 
@@ -484,39 +362,14 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
     """Executa uma ferramenta"""
     
     try:
-        if name == "cnpj_public_lookup":
-            result = await cnpj_client.public_lookup(arguments["cnpj"])
-            
-        elif name == "cnpj_detailed_lookup":
+        if name == "cnpj_detailed_lookup":
             result = await cnpj_client.detailed_lookup(arguments["cnpj"])
-            
-        elif name == "cnpj_bulk_lookup":
-            result = await cnpj_client.bulk_lookup(
-                arguments["cnpjs"],
-                arguments.get("uf"),
-                arguments.get("situacao_cadastral")
-            )
-            
+    
         elif name == "cnpj_advanced_search":
             result = await cnpj_client.advanced_search(**arguments)
             
-        elif name == "search_estimate":
-            result = await cnpj_client.search_estimate(**arguments)
-            
         elif name == "search_csv":
             result = await cnpj_client.search_csv(**arguments)
-            
-        elif name == "csv_estimate":
-            result = await cnpj_client.csv_estimate(**arguments)
-            
-        elif name == "logs_summary":
-            result = await cnpj_client.logs_summary()
-            
-        elif name == "logs_history":
-            result = await cnpj_client.logs_history(
-                arguments.get("page"),
-                arguments.get("per_page")
-            )
             
         else:
             raise ValueError(f"Unknown tool: {name}")
