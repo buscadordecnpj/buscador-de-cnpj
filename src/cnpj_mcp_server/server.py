@@ -332,8 +332,8 @@ class CNPJClient:
         
         clean_cnpj = self._clean_cnpj(cnpj)
         endpoint = f"/cnpj/{clean_cnpj}"
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        return await self._make_request(endpoint, headers=headers)
+        params = {"x-api-key": self.api_key}
+        return await self._make_request(endpoint, params=params)
     
     async def bulk_lookup(self, cnpjs: List[str], uf: Optional[str] = None, 
                          situacao_cadastral: Optional[str] = None) -> Dict[str, Any]:
@@ -351,14 +351,13 @@ class CNPJClient:
         endpoint = "/cnpj/list"
         
         # Preparar dados para POST
-        data = {"cnpjs": clean_cnpjs}
+        data = {"cnpjs": clean_cnpjs, "x-api-key": self.api_key}
         if uf:
             data["uf"] = uf
         if situacao_cadastral:
             data["situacao_cadastral"] = situacao_cadastral
             
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        return await self._make_post_request(endpoint, data=data, headers=headers)
+        return await self._make_post_request(endpoint, data=data)
     
     async def advanced_search(self, **kwargs) -> Dict[str, Any]:
         """Busca avançada com filtros"""
@@ -382,12 +381,11 @@ class CNPJClient:
         
         # Remove parâmetros vazios
         params = {k: v for k, v in kwargs.items() if v is not None}
+        # Adiciona API key como parâmetro
+        params["x-api-key"] = self.api_key
         print(f"🔍 Debug - Parâmetros: {params}")
         
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        print(f"🔍 Debug - Headers: Authorization Bearer {self.api_key[:10]}...")
-        
-        return await self._make_request(endpoint, params=params, headers=headers)
+        return await self._make_request(endpoint, params=params)
     
     async def search_estimate(self, **kwargs) -> Dict[str, Any]:
         """Estima o custo de uma busca avançada (gratuito)"""
@@ -396,8 +394,8 @@ class CNPJClient:
         # Remove parâmetros vazios
         params = {k: v for k, v in kwargs.items() if v is not None}
         
-        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else None
-        return await self._make_request(endpoint, params=params, headers=headers)
+        params = {"x-api-key": self.api_key} if self.api_key else None
+        return await self._make_request(endpoint, params=params)
     
     async def search_csv(self, **kwargs) -> Dict[str, Any]:
         """Exporta resultados de busca em CSV"""
@@ -415,8 +413,8 @@ class CNPJClient:
         # Remove parâmetros vazios
         params = {k: v for k, v in kwargs.items() if v is not None}
         
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        return await self._make_request(endpoint, params=params, headers=headers)
+        params = {"x-api-key": self.api_key}
+        return await self._make_request(endpoint, params=params)
     
     async def csv_estimate(self, **kwargs) -> Dict[str, Any]:
         """Estima o custo de exportação CSV (gratuito)"""
@@ -425,8 +423,8 @@ class CNPJClient:
         # Remove parâmetros vazios
         params = {k: v for k, v in kwargs.items() if v is not None}
         
-        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else None
-        return await self._make_request(endpoint, params=params, headers=headers)
+        params = {"x-api-key": self.api_key} if self.api_key else None
+        return await self._make_request(endpoint, params=params)
     
     async def logs_summary(self) -> Dict[str, Any]:
         """Resumo dos logs de uso da API"""
@@ -439,8 +437,8 @@ class CNPJClient:
             )
         
         endpoint = "/logs/summary"
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        return await self._make_request(endpoint, headers=headers)
+        params = {"x-api-key": self.api_key}
+        return await self._make_request(endpoint, params=params)
     
     async def logs_history(self, page: Optional[int] = None, per_page: Optional[int] = None) -> Dict[str, Any]:
         """Histórico detalhado de logs da API"""
@@ -460,8 +458,8 @@ class CNPJClient:
         if per_page is not None:
             params["per_page"] = per_page
         
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        return await self._make_request(endpoint, params=params, headers=headers)
+        params = {"x-api-key": self.api_key}
+        return await self._make_request(endpoint, params=params)
 
 
 # Initialize client
