@@ -11,6 +11,7 @@ install-dev:
 	$(PY) -m ensurepip --upgrade || true
 	$(PIP) install -U pip
 	$(PIP) install -U pytest pytest-asyncio
+	$(PIP) install -e .
 
 test:
 	$(PYTEST) -q

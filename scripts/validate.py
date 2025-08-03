@@ -31,11 +31,26 @@ def validate_syntax():
     ok("server.py parses successfully")
 
 
+def _extract_tools_from_ast() -> dict:
+    with open(TARGET, "r", encoding="utf-8") as f:
+        source = f.read()
+    tree = ast.parse(source)
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "TOOLS":
+                    # Evaluate literal dict safely
+                    return ast.literal_eval(node.value)
+    fail("TOOLS assignment not found in server.py")
+
+
 def validate_tools_shape():
-    # Import safely with env var set
-    os.environ.setdefault("CNPJ_API_KEY", "validation_key")
-    mod = importlib.import_module("cnpj_mcp_server.server")
-    tools = getattr(mod, "TOOLS", None)
+    # Prefer AST extraction to avoid importing runtime deps
+    try:
+        tools = _extract_tools_from_ast()
+    except Exception as e:
+        fail(f"Failed to parse TOOLS via AST: {e}")
+
     if not isinstance(tools, dict):
         fail("TOOLS is missing or not a dict")
 
@@ -53,12 +68,11 @@ def validate_tools_shape():
         if not isinstance(schema, dict) or schema.get("type") != "object":
             fail(f"Tool {name} inputSchema must be an object")
 
-    # term_search requires term
     term_schema = tools["term_search"]["inputSchema"]
     if "term" not in term_schema.get("required", []):
         fail("term_search must require 'term'")
 
-    ok("TOOLS shape validated")
+    ok("TOOLS shape validated (AST)")
 
 
 def main():
