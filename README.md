@@ -2,6 +2,8 @@
 
 Um servidor MCP (Model Context Protocol) para busca de dados de empresas brasileiras usando a API do [buscadordecnpj.com](https://buscadordecnpj.com).
 
+![Demonstração do Buscador de CNPJ funcionando em um agente (GIF)](./example.gif)
+
 ## 📋 Funcionalidades
 
 ### 🆓 Consultas Gratuitas
