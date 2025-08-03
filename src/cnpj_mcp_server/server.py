@@ -90,7 +90,6 @@ TOOLS = {
             }
         }
     },
-    **{
     "search_csv": {
         "name": "search_csv",
         "description": "Exporta resultados de busca em formato CSV (requer API key) - 2 créditos por página",
