@@ -159,6 +159,8 @@ Feche e abra novamente o Claude Desktop para carregar o novo servidor MCP.
 
 ## 📖 Como Usar
 
+Para detalhes de deploy, validação e melhores práticas, consulte também o QWEN.md.
+
 ### Consulta Pública (Gratuita)
 ```
 Busque informações da empresa com CNPJ 11.222.333/0001-81
@@ -225,6 +227,8 @@ Busque empresas com nome "Petrobras" no estado do Rio de Janeiro que estejam ati
   }
 }
 ```
+
+Dica: use `term` para linguagem natural; combine com `uf`, `municipio`, `bairro` para acelerar e refinar.
 
 ### 5. Busca Avançada (Filtros Estruturados)
 ```json
