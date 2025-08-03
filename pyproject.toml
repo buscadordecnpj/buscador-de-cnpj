@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "buscador-de-cnpj"
-version = "0.2.4"
+version = "0.2.5"
 description = "A MCP server for CNPJ search using buscadordecnpj.com API"
 readme = "README.md"
 license = {text = "MIT"}
